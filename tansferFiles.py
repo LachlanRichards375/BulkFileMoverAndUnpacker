@@ -1,7 +1,8 @@
 import os
 import shutil
 import zipfile
-import xml.etree.ElementTree as ET
+import fileinput
+import re
 
 '''
 
@@ -20,6 +21,7 @@ limitFilesToMove = 0
 		DDWT Options
 
 '''
+do_ddwt_cleanup = False
 #Modify connection string for DDWT
 new_connection_string = "Data Source=(LocalDB)\MSSQLLocalDB;Initial Catalog=MoviesDB;Integrated Security=True"
 #Expected Folder Name
@@ -47,7 +49,9 @@ def create_folder_and_move_file(file_path, destination_folder):
 		shutil.move(file_path, destination_path)
 	
 	print(f"Moved {file_name} to {destination_folder}")
-	DDWT_cleanup(destination_folder)
+	
+	if(do_ddwt_cleanup):
+		DDWT_cleanup(destination_folder)
 
 def DDWT_cleanup(folder_path):
 	attemptCount = 0
@@ -68,7 +72,7 @@ def DDWT_cleanup(folder_path):
 	if(not os.path.exists(AppData)):
 		print(f"ERROR: Unable to find App_Data folder for {folder_path}")
 		for log in logs:
-			print(f"{log}")
+			print(f"\t{log}")
 		return
 	   
 	if(os.path.exists(AppData + "/MoviesDB.mdf")):
@@ -83,24 +87,23 @@ def DDWT_cleanup(folder_path):
 	#Replace Connection String
 	WebConfigFile = AppData + "/../Web.config"
 	if(os.path.exists(WebConfigFile)):
-		modify_connection_string(WebConfigFile, new_connection_string)
+		modify_connection_string(WebConfigFile)
 	else:
 		print(f"UNABLE to clean {WebConfigFile}")
 
-def modify_connection_string(xml_file, new_connection_string):
-	tree = ET.parse(xml_file)
-	root = tree.getroot()
 
-	# Find the connection string element
-	connection_string_elem = root.find(".//add[@name='MoviesDB']")
+def modify_connection_string(file_path):
+	# Define the pattern to find connectionString= and the value in quotation marks
+	pattern = re.compile(r'(connectionString=")([^"]*)(")')
+	#Replace '\' with '\\' to escape it correctly
+	connectionString = new_connection_string.replace('\\', '\\\\')
 
-	# Modify the connection string attribute
-	if connection_string_elem is not None:
-		connection_string_elem.set("connectionString", new_connection_string)
-		tree.write(xml_file)
-		print("Connection string modified successfully.")
-	else:
-		print("Connection string not found in the XML file.")
+	# Iterate over the lines in the file and update the connection string
+	with fileinput.FileInput(file_path, inplace=True, backup='.bak') as file:
+		for line in file:
+			updated_line = pattern.sub(r'\1' + connectionString + r'\3', line)
+			print(updated_line, end='')
+
 
 def unzip_file(file_path, destination_path):
 	with zipfile.ZipFile(file_path, 'r') as zip_ref:
