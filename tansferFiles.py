@@ -10,11 +10,11 @@ import re
 
 '''
 #relative link to the folder where your zipped submissions are
-zippedSubmissionsFolder = './DDWT/Exam'
+zippedSubmissionsFolder = './DDWT/Notes/W3'
 #Remove the rtf coversheet files that you forgot to untick.
 removeRTFFiles = True
 #Limit the amount of files you want to move, good for testing. 0 = off
-limitFilesToMove = 0
+limitFilesToMove = 1
 
 '''
 
@@ -143,4 +143,22 @@ def bulk_move_files():
 
 		counter = counter + 1
 
-bulk_move_files()
+
+def bulk_rename_files():
+
+	counter = 1
+	files = os.listdir(zippedSubmissionsFolder)
+
+	for file in files:
+		#Limit to a number of files to test
+		if(limitFilesToMove > 0 and counter > limitFilesToMove):
+			break
+                #GetStudentID
+		studentID = file.split('_')[4][:8]
+
+		os.rename(zippedSubmissionsFolder + "/" + file, zippedSubmissionsFolder + "/" + str(studentID) + "_" + str(file))
+
+
+#bulk_move_files()
+bulk_rename_files()
+        
