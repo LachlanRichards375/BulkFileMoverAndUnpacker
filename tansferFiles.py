@@ -4,28 +4,29 @@ import zipfile
 import fileinput
 import re
 
+
+
 '''
-
 		Options
-
 '''
 #relative link to the folder where your zipped submissions are
-zippedSubmissionsFolder = './DDWT/Notes/W3'
+zippedSubmissionsFolder = './DDWT/A2'
 #Remove the rtf coversheet files that you forgot to untick.
 removeRTFFiles = True
 #Limit the amount of files you want to move, good for testing. 0 = off
-limitFilesToMove = 1
+limitFilesToMove = 0
 
 '''
-
 		DDWT Options
-
 '''
 do_ddwt_cleanup = False
 #Modify connection string for DDWT
-new_connection_string = "Data Source=(LocalDB)\MSSQLLocalDB;Initial Catalog=MoviesDB;Integrated Security=True"
+new_connection_string = "Data Source=(LocalDB)\MSSQLLocalDB;Initial Catalog=WaterQuality;Integrated Security=True"
 #Expected Folder Name
-expected_folder_name = "DDWTMovies"
+expected_folder_name = "DDWTAssignmentWaterQuality"
+
+
+
 
 def create_folder_and_move_file(file_path, destination_folder):
 	# Extract the file name from the file path
@@ -74,15 +75,14 @@ def DDWT_cleanup(folder_path):
 		for log in logs:
 			print(f"\t{log}")
 		return
-	   
-	if(os.path.exists(AppData + "/MoviesDB.mdf")):
-		os.remove(AppData + "/MoviesDB.mdf")
 
-	if(os.path.exists((AppData + "/MoviesDB_log.ldf"))):
-		os.remove(AppData + "/MoviesDB_log.ldf")
-		
-	if(os.path.exists((AppData + "/SQLQuery MoviesDB.sql"))):
-		os.remove(AppData + "/SQLQuery MoviesDB.sql")
+	for filename in os.listdir(AppData):
+		file_path = os.path.join(AppData, filename)
+		try:
+			if os.path.isfile(file_path) or os.path.islink(file_path):
+				os.remove(file_path)
+		except Exception as e:
+			print('Failed to delete %s. Reason: %s' % (file_path, e))
 
 	#Replace Connection String
 	WebConfigFile = AppData + "/../Web.config"
@@ -120,6 +120,7 @@ def bulk_move_files():
 	counter = 1
 
 	# Get a list of all files in the folder
+	print(zippedSubmissionsFolder)
 	files = os.listdir(zippedSubmissionsFolder)
 
 	for file in files:
@@ -158,7 +159,6 @@ def bulk_rename_files():
 
 		os.rename(zippedSubmissionsFolder + "/" + file, zippedSubmissionsFolder + "/" + str(studentID) + "_" + str(file))
 
-
-#bulk_move_files()
-bulk_rename_files()
+bulk_move_files()
+# bulk_rename_files()
         
